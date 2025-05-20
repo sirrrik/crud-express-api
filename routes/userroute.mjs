@@ -2,28 +2,10 @@
 import { request, response, Router } from "express";
 import mockusers from "../constants/mockusers.mjs";
 
-// import resolveUserByIDMiddleware from "../middleware/usermiddleWare.mjs";
+import resolveUserByIDMiddleware from "../middleware/usermiddleWare.mjs";
 
 
 const route = Router();
-
-const resolveUserByIDMiddleware = (request, response, next) => {
-  const { body, params: { id }, } = request;
-  // parse the id to interger
-  const parseID = parseInt(id);
-  // if the user ID doesnt exist
-  if (isNaN(parseID))
-    return response.status(400).send([{ msg: "Invalid User ID" }]);
-  const findUserByindex = mockusers.findIndex((user) => user.id === parseID);
-  console.log(findUserByindex);
-  // if the user ID  is not in the list
-  if (findUserByindex === -1)
-    return response
-      .status(404)
-      .send([{ msg: "The user ID is not in this list " }]);
-  request.findUserByindex = findUserByindex;
-    next();
-};
 
 // declare the first route
 route.get('/',(request,response)=>{
@@ -58,10 +40,10 @@ route.get('/api/users/',(request,response)=>{
 
 // Update type with put-replace the entire row
 
-route.put('/api/users/:id',resolveUserByIDMiddleware(),(request,response)=>{
+route.put('/api/users/:id',resolveUserByIDMiddleware,(request,response)=>{
     const {
         body,
-        params:{id}
+        findUserByindex
 
     } = request;
 
@@ -71,6 +53,27 @@ route.put('/api/users/:id',resolveUserByIDMiddleware(),(request,response)=>{
     return response.send(mockusers).status(200); 
 });
 
+// update the user details but onlt the specific field
+route.patch('/api/users/:id',resolveUserByIDMiddleware,(request,response)=>{
+    const {
+        body,
+        params: {id},
+        findUserByindex
+    }=request;
+    // find user in the list and 
+    mockusers[findUserByindex] = {...mockusers[findUserByindex], ...body}
+    return response.status(201).send([{msg:"User field updated"}]);
+});
 
+// delete user 
+
+route.delete('/api/user/:id',(request,response)=>{
+      const {
+        body,
+        params: {id},
+        findUserByindex
+    }=request;
+    // find the user
+});
 
 export default route;
