@@ -1,8 +1,9 @@
 
-import { request, response, Router } from "express";
+import {  request, response, Router } from "express";
 import mockusers from "../constants/mockusers.mjs";
 
 import resolveUserByIDMiddleware from "../middleware/usermiddleWare.mjs";
+import { query, validationResult } from "express-validator";
 
 
 const route = Router();
@@ -30,12 +31,26 @@ route.post('/api/users',(request,response)=>{
 });
 
 // reads all the users
-route.get('/api/users/',(request,response)=>{
+// the query creats a validation chain 
+route.get('/api/users/',query('filter').isString().notEmpty(),(request,response)=>{
 
     // send all users
     const users = mockusers;
     console.log(users);
-  return  response.status(200).send(users);
+    // validate and filter users
+    const result = validationResult(request);
+    console.log(result);
+
+    // query the filtered fields else return the entire fields 
+
+    // destructure the filter and value in the request body 
+    const {
+        query: {filter,value} 
+    } = request;
+
+    if(filter && value ) return response.status(200).send(mockusers.filter((user) => user[filter].includes(value)));
+
+    //   return  response.status(200).send(users);
 });
 
 // Update type with put-replace the entire row
@@ -67,13 +82,17 @@ route.patch('/api/users/:id',resolveUserByIDMiddleware,(request,response)=>{
 
 // delete user 
 
-route.delete('/api/user/:id',(request,response)=>{
+route.delete('/api/users/:id',resolveUserByIDMiddleware,(request,response)=>{
       const {
-        body,
         params: {id},
         findUserByindex
     }=request;
     // find the user
+    const parseID = parseInt(id);
+    console.log(findUserByindex);
+
+    mockusers.splice(findUserByindex,1);
+    return response.status(200).send([{msg:"User deleted"}]);
 });
 
 export default route;
